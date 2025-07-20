@@ -10,7 +10,7 @@ export async function generateStaticParams() {
     formData.append("domain_name", "test")
     formData.append("slug", "test-story-2")
 
-    const res = await fetch("http://localhost/mojo-network-saas-api/api/softStoryWatch", {
+    const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
       body: formData,
     })
