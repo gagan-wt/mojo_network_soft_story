@@ -9,6 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  basePath: '/soft-stories',
 }
 
 export default nextConfig
