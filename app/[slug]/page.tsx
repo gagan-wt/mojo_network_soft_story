@@ -1,5 +1,5 @@
-import { VideoFeed } from "../components/video-feed"
-import type { ApiVideo, Video } from "../types"
+import { VideoFeed } from "../watch/components/video-feed"
+import type { ApiVideo, Video } from "../watch/types"
 
 // This function fetches all videos to tell Next.js which pages to pre-build.
 // It sends a POST request without a specific slug to get all items.
