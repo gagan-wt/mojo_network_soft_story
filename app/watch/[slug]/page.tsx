@@ -44,7 +44,7 @@ async function getVideos(slug: string): Promise<Video[]> {
     formData.append("domain_name", "test")
     formData.append("slug", slug)
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/softStoryWatch`, {
+    const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
       body: formData,
     })
