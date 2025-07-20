@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: "/soft-stories/watch",
-  assetPrefix: "/soft-stories/watch",
-  trailingSlash: true,
   eslint: {
     ignoreDuringBuilds: true,
   },

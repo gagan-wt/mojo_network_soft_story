@@ -67,7 +67,6 @@ async function getVideos(slug: string): Promise<Video[]> {
       description: apiVideo.story_description,
       slug: apiVideo.slug,
       src: apiVideo.generated_story_url,
-      // Hardcoded values as requested
       reporterName: "Sagar Thakur",
       channelName: "Parso Tak",
       domain: "parsotak.com",
