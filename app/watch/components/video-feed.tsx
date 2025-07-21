@@ -35,9 +35,15 @@ export function VideoFeed({ videos, initialSlug }: VideoFeedProps) {
             const index = Number.parseInt(entry.target.getAttribute("data-index") || "0", 10)
             setActiveIndex(index)
             const video = videos[index]
-            if (video && pathname !== `/soft-stories/watch/${video.slug}`) {
-              window.history.replaceState(null, "", `/soft-stories/watch/${video.slug}`);
+            console.log("Pathname:", pathname, "Video slug:", video?.slug)
+
+            if (video && pathname !== `/watch/${video.slug}`) {
+              const basePath = window.location.pathname.split("/watch")[0]
+              window.history.replaceState(null, "", `${basePath}/watch/${video.slug}`);
+              // window.history.replaceState(null, "", `/watch/${video.slug}`);
+              console.log("Updated URL to:", `${basePath}/watch/${video.slug}`);
             }
+
           }
         })
       },
