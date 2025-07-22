@@ -1,3 +1,4 @@
+import { headers } from "next/headers"
 import { VideoFeed } from "../components/video-feed"
 import type { ApiVideo, Video } from "../types"
 
@@ -9,6 +10,7 @@ export async function generateStaticParams() {
     formData.append("page_no", "0")
     formData.append("domain_name", "test")
     formData.append("slug", "test-story-2")
+    console.log("Test")
 
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
@@ -35,34 +37,51 @@ export async function generateStaticParams() {
   }
 }
 
-// This function fetches the video data for the page.
-// It sends the current slug to your API.
-async function getVideos(slug: string): Promise<Video[]> {
+function getDomainName(): string {
+  const headersList = headers();
+  const host = headersList.get('host') || '';
+
+  const IS_LOCAL = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+  const SAAS_MAIN_DOMAIN = 'mojonetwork.in';
+
+  if (IS_LOCAL) {
+    return 'test';
+  }
+
+  if (host.endsWith(SAAS_MAIN_DOMAIN)) {
+    return host.replace(`.${SAAS_MAIN_DOMAIN}`, ''); // Subdomain
+  }
+
+  return host.replace(/^www\./, ''); // Custom Domain Without www. from custom domains
+}
+
+async function getVideos(slug: string, domainName: string): Promise<Video[]> {
   try {
-    const formData = new FormData()
-    formData.append("page_no", "0")
-    formData.append("domain_name", "test")
-    formData.append("slug", slug)
+
+    const formData = new FormData();
+    formData.append("page_no", "0");
+    formData.append("domain_name", "test");
+    formData.append("slug", slug);
+    console.log("Domain:", domainName);
 
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
       body: formData,
-    })
+    });
 
     if (!res.ok) {
-      throw new Error(`Failed to fetch videos: ${res.statusText}`)
+      throw new Error(`Failed to fetch videos: ${res.statusText}`);
     }
 
-    const { data }: { data: ApiVideo[] } = await res.json()
+    const { data }: { data: ApiVideo[] } = await res.json();
 
     if (!Array.isArray(data)) {
-      console.error("API did not return an array of videos")
-      return []
+      console.error("API did not return an array of videos");
+      return [];
     }
 
-    // Map the API data to the format our components expect
     return data.map((apiVideo) => ({
-      id: apiVideo.slug, // Use slug as the primary ID for components
+      id: apiVideo.slug,
       title: apiVideo.story_title,
       description: apiVideo.story_description,
       slug: apiVideo.slug,
@@ -70,15 +89,17 @@ async function getVideos(slug: string): Promise<Video[]> {
       reporterName: "Sagar Thakur",
       channelName: "Parso Tak",
       domain: "parsotak.com",
-    }))
+    }));
+
   } catch (error) {
-    console.error("Failed to fetch videos:", error)
-    return []
+    console.error("Failed to fetch videos:", error);
+    return [];
   }
 }
 
 export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
-  const videos = await getVideos(params.slug)
+   const domainName = getDomainName();
+  const videos = await getVideos(params.slug, domainName);
 
   if (!videos.length) {
     return (
