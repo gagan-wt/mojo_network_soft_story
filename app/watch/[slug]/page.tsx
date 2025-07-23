@@ -71,8 +71,6 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
     console.log("Domain:", domainName);
     console.log("Slug:", slug);
 
-    
-
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
       body: formData,
@@ -107,7 +105,7 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
 }
 
 export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
-  const domainName = getDomainName('full');
+  const domainName = getDomainName('subdomain');
   const videos = await getVideos(params.slug, domainName);
 
   if (!videos.length) {
