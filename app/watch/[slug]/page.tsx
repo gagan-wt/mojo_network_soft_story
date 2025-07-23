@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { headers } from "next/headers"
 import { VideoFeed } from "../components/video-feed"
 import type { ApiVideo, Video } from "../types"
@@ -10,7 +12,6 @@ export async function generateStaticParams() {
     formData.append("page_no", "0")
     formData.append("domain_name", "test")
     formData.append("slug", "test-story-2")
-    console.log("Test")
 
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
@@ -37,7 +38,7 @@ export async function generateStaticParams() {
   }
 }
 
-function getDomainName(): string {
+function getDomainName(mode: 'subdomain' | 'full' = 'subdomain'): string {
   const headersList = headers();
   const host = headersList.get('host') || '';
 
@@ -45,14 +46,19 @@ function getDomainName(): string {
   const SAAS_MAIN_DOMAIN = 'mojonetwork.in';
 
   if (IS_LOCAL) {
-    return 'test';
+    return mode === 'full' ? host : 'test';
   }
 
+  if (mode === 'full') {
+    return host;  // Always return entire host as-is
+  }
+
+  // MODE: 'subdomain'
   if (host.endsWith(SAAS_MAIN_DOMAIN)) {
-    return host.replace(`.${SAAS_MAIN_DOMAIN}`, ''); // Subdomain
+    return host.replace(`.${SAAS_MAIN_DOMAIN}`, ''); // return subdomain
   }
 
-  return host.replace(/^www\./, ''); // Custom Domain Without www. from custom domains
+  return host.replace(/^www\./, ''); // returns sagar.com (as domain identifier)
 }
 
 async function getVideos(slug: string, domainName: string): Promise<Video[]> {
@@ -60,9 +66,12 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
 
     const formData = new FormData();
     formData.append("page_no", "0");
-    formData.append("domain_name", "test");
+    formData.append("domain_name", domainName);
     formData.append("slug", slug);
     console.log("Domain:", domainName);
+    console.log("Slug:", slug);
+
+    
 
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
@@ -88,7 +97,7 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
       src: apiVideo.generated_story_url,
       reporterName: "Sagar Thakur",
       channelName: "Parso Tak",
-      domain: "parsotak.com",
+      domain: domainName,
     }));
 
   } catch (error) {
@@ -98,19 +107,25 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
 }
 
 export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
-   const domainName = getDomainName();
+  const domainName = getDomainName('full');
   const videos = await getVideos(params.slug, domainName);
 
   if (!videos.length) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-black text-white">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">Failed to Load Story</h2>
-          <p className="text-neutral-400">Could not fetch video data for slug: {params.slug}</p>
+        <div className="text-center px-4">
+          <h2 className="text-2xl font-semibold">Story Unavailable</h2>
+          <p className="text-neutral-400 mt-2">
+            The requested story isn’t available at the moment.
+          </p>
+          <p className="text-neutral-500 mt-4">
+            {domainName}
+          </p>
         </div>
       </div>
     )
   }
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900">
