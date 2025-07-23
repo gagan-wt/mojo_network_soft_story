@@ -16,7 +16,6 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Soft Stories",
   },
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
