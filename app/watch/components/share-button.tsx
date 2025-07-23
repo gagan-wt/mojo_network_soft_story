@@ -12,7 +12,7 @@ export function ShareButton({ video }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/soft-stories/${video.slug}`
+    const shareUrl = `${window.location.origin}/soft-stories/watch/${video.slug}`
     const shareData = {
       title: `Check out this story: ${video.title}`,
       text: `Watch "${video.title}" from ${video.channelName}`,

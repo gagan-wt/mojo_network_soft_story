@@ -63,13 +63,11 @@ function getDomainName(mode: 'subdomain' | 'full' = 'subdomain'): string {
 
 async function getVideos(slug: string, domainName: string): Promise<Video[]> {
   try {
-
+  const fullDomain = getDomainName('full')
     const formData = new FormData();
     formData.append("page_no", "0");
     formData.append("domain_name", domainName);
     formData.append("slug", slug);
-    console.log("Domain:", domainName);
-    console.log("Slug:", slug);
 
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
@@ -95,7 +93,7 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
       src: apiVideo.generated_story_url,
       reporterName: apiVideo.reporter_name,
       channelName: apiVideo.channel_name,
-      domain: domainName,
+      domain: fullDomain,
     }));
 
   } catch (error) {
