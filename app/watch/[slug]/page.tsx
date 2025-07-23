@@ -93,8 +93,8 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
       description: apiVideo.story_description,
       slug: apiVideo.slug,
       src: apiVideo.generated_story_url,
-      reporterName: "Sagar Thakur",
-      channelName: "Parso Tak",
+      reporterName: apiVideo.reporter_name,
+      channelName: apiVideo.channel_name,
       domain: domainName,
     }));
 
@@ -106,6 +106,7 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
 
 export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
   const domainName = getDomainName('subdomain');
+  const getFullDomainName = getDomainName('full');
   const videos = await getVideos(params.slug, domainName);
 
   if (!videos.length) {
@@ -117,7 +118,7 @@ export default async function SoftStoryPage({ params }: { params: { slug: string
             The requested story isn’t available at the moment.
           </p>
           <p className="text-neutral-500 mt-4">
-            {domainName}
+            {getFullDomainName}
           </p>
         </div>
       </div>
