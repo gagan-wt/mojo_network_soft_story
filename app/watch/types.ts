@@ -5,7 +5,9 @@ export interface ApiVideo {
   story_description: string
   slug: string
   generated_story_url: string
-  // ... other fields from your API if needed
+  reporter_name: string
+  channel_name: string
+  domain: string
 }
 
 // The structure of the video data used by our components
