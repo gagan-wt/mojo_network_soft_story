@@ -108,7 +108,7 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
   return (
     <div className="relative w-full h-full bg-black">
       <DoubleTap onDoubleTap={togglePlayPause}>
-        <video ref={videoRef} src={video.src} className="w-full h-full object-cover" loop playsInline muted={isMuted} />
+        <video ref={videoRef} src={video.src} className="w-full h-full object-contain" loop playsInline muted={isMuted} />
       </DoubleTap>
 
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

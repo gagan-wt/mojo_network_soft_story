@@ -50,7 +50,7 @@ function getDomainName(mode: 'subdomain' | 'full' = 'subdomain'): string {
   }
 
   if (mode === 'full') {
-    return host;  // Always return entire host as-is
+    return host;  // Always return entire host as it is
   }
 
   // MODE: 'subdomain'
@@ -100,7 +100,7 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
     console.error("Failed to fetch videos:", error);
     return [];
   }
-}
+} 
 
 export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
   const domainName = getDomainName('subdomain');
