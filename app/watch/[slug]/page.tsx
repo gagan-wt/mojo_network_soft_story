@@ -66,7 +66,7 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
   const fullDomain = getDomainName('full')
     const formData = new FormData();
     formData.append("page_no", "0");
-    formData.append("domain_name", "test");
+    formData.append("domain_name", domainName);
     formData.append("slug", slug);
 
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
