@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Play, Loader2 } from "lucide-react"
+import { Play, Loader2, Heart, ArrowBigDown, SkipBack, StepBack, Cross, X } from "lucide-react"
 import { DoubleTap } from "./double-tap"
 import { TimelineBar } from "./timeline-bar"
 import { ControlPanel } from "./control-panel"
@@ -102,11 +102,19 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
       videoRef.current.play()
     }
   }, [])
+  const handleClose = () => {
+    window.location.href = window.location.origin;
+  }
 
   const toggleDescription = () => setIsDescriptionExpanded(!isDescriptionExpanded)
 
   return (
     <div className="relative w-full h-full bg-black">
+      <button className="flex flex-col items-center gap-1 text-white group ml-auto" onClick={handleClose}>
+        <div className="p-2.5 rounded-full bg-black/30 group-hover:bg-pink-500 transition-colors">
+          <X size={26} className="icon-shadow" />
+        </div>
+      </button>
       <DoubleTap onDoubleTap={togglePlayPause}>
         <video ref={videoRef} src={video.src} className="w-full h-full object-contain" loop playsInline muted={isMuted} />
       </DoubleTap>
