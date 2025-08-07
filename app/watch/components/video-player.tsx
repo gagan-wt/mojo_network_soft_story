@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Play, Loader2, Heart, ArrowBigDown, SkipBack, StepBack, Cross, X } from "lucide-react"
+import { Play, Loader2, Heart, ArrowBigDown, SkipBack, StepBack, Cross, X, ArrowLeft } from "lucide-react"
 import { DoubleTap } from "./double-tap"
 import { TimelineBar } from "./timeline-bar"
 import { ControlPanel } from "./control-panel"
@@ -110,9 +110,15 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
 
   return (
     <div className="relative w-full h-full bg-black">
-      <button className="flex flex-col items-center gap-1 text-white group ml-auto" onClick={handleClose}>
-        <div className="p-2.5 rounded-full bg-black/30 group-hover:bg-pink-500 transition-colors">
-          <X size={26} className="icon-shadow" />
+      <button
+        onClick={handleClose}
+        className="absolute top-3 left-4 border rounded-3xl flex items-center gap-1 text-slate-200 group ml-auto hover:bg-slate-700 border-slate-200"
+        style={{zIndex: '9999'}}
+        aria-label="Back"
+      >
+        <div className="py-1 px-2.5 rounded-full  transition-colors flex gap-1 items-center">
+          <ArrowLeft size={16} className="icon-shadow" />
+          <span className="text-[11px] font-semibold text-shadow">Back</span>
         </div>
       </button>
       <DoubleTap onDoubleTap={togglePlayPause}>
