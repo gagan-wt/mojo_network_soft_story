@@ -36,7 +36,6 @@ export function VideoFeed({ videos, initialSlug }: VideoFeedProps) {
             setActiveIndex(index)
             const video = videos[index]
             console.log("Pathname:", pathname, "Video slug:", video?.slug)
-
             if (video && pathname !== `/watch/${video.slug}`) {
               const basePath = window.location.pathname.split("/watch")[0]
               window.history.replaceState(null, "", `${basePath}/watch/${video.slug}`);
