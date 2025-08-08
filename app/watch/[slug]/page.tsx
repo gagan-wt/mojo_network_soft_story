@@ -38,8 +38,8 @@ export async function generateStaticParams() {
   }
 }
 
-function getDomainName(mode: 'subdomain' | 'full' = 'subdomain'): string {
-  const headersList = headers();
+async function getDomainName(mode: 'subdomain' | 'full' = 'subdomain'): string {
+  const headersList = await headers();
   const host = headersList.get('host') || '';
 
   const IS_LOCAL = host.startsWith('localhost') || host.startsWith('127.0.0.1');
@@ -63,7 +63,7 @@ function getDomainName(mode: 'subdomain' | 'full' = 'subdomain'): string {
 
 async function getVideos(slug: string, domainName: string): Promise<Video[]> {
   try {
-  const fullDomain = getDomainName('full')
+  const fullDomain = await getDomainName('full')
     const formData = new FormData();
     formData.append("page_no", "0");
     formData.append("domain_name", domainName);
@@ -103,8 +103,8 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
 } 
 
 export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
-  const domainName = getDomainName('subdomain');
-  const getFullDomainName = getDomainName('full');
+  const domainName = await getDomainName('subdomain');
+  const getFullDomainName = await getDomainName('full');
   const videos = await getVideos(params.slug, domainName);
 
   if (!videos.length) {
