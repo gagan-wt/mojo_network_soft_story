@@ -2,7 +2,7 @@
 
 import { Heart, MessageCircle, Volume2, VolumeX } from "lucide-react"
 import { ShareButton } from "./share-button"
-import type { Video } from "../data"
+import type { Video } from "../types"
 
 interface ControlPanelProps {
   video: Video
