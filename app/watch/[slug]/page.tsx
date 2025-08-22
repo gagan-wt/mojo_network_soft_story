@@ -102,9 +102,9 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
 }
 
 export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
-  const domainName = getDomainName("subdomain")
-  const getFullDomainName = getDomainName("full")
-  const videos = await getVideos(params.slug, domainName)
+  const domainName = await getDomainName('subdomain');
+  const getFullDomainName = await getDomainName('full');
+  const videos = await getVideos(params.slug, domainName);
 
   if (!videos.length) {
     return (

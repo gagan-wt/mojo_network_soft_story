@@ -123,7 +123,7 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
             const index = Number.parseInt(entry.target.getAttribute("data-index") || "0", 10)
             setActiveIndex(index)
             const video = videos[index]
-
+            console.log("Pathname:", pathname, "Video slug:", video?.slug)
             if (video && pathname !== `/watch/${video.slug}`) {
               const basePath = window.location.pathname.split("/watch")[0]
               window.history.replaceState(null, "", `${basePath}/watch/${video.slug}`)
