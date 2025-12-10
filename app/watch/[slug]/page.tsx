@@ -73,7 +73,6 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
       method: "POST",
       body: formData,
     })
-
     if (!res.ok) {
       throw new Error(`Failed to fetch videos: ${res.statusText}`)
     }
