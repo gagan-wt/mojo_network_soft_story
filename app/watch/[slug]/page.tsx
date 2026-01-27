@@ -11,7 +11,7 @@ export async function generateStaticParams() {
     const formData = new FormData()
     formData.append("page_no", "0")
     formData.append("domain_name", "test")
-    formData.append("slug", "test-story-2")
+    formData.append("slug", "")
 
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
@@ -19,10 +19,13 @@ export async function generateStaticParams() {
     })
 
     if (!res.ok) {
-      throw new Error(`Failed to fetch slugs: ${res.statusText}`)
+      const errorText = await res.text().catch(() => "No error body")
+      console.error(`Failed to fetch slugs: ${res.status} ${res.statusText} - ${errorText}`)
+      return []
     }
 
-    const { data }: { data: ApiVideo[] } = await res.json()
+    const response = await res.json()
+    const data = response.data
 
     if (!Array.isArray(data)) {
       console.error("API did not return an array for generateStaticParams")
@@ -38,8 +41,8 @@ export async function generateStaticParams() {
   }
 }
 
-function getDomainName(mode: "subdomain" | "full" = "subdomain"): string {
-  const headersList = headers()
+async function getDomainName(mode: "subdomain" | "full" = "subdomain"): Promise<string> {
+  const headersList = await headers()
   const host = headersList.get("host") || ""
 
   const IS_LOCAL = host.startsWith("localhost") || host.startsWith("127.0.0.1")
@@ -63,7 +66,7 @@ function getDomainName(mode: "subdomain" | "full" = "subdomain"): string {
 
 async function getVideos(slug: string, domainName: string): Promise<Video[]> {
   try {
-    const fullDomain = getDomainName("full")
+    const fullDomain = await getDomainName("full")
     const formData = new FormData()
     formData.append("page_no", "0")
     formData.append("domain_name", domainName)
@@ -73,11 +76,15 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
       method: "POST",
       body: formData,
     })
+
     if (!res.ok) {
-      throw new Error(`Failed to fetch videos: ${res.statusText}`)
+      const errorText = await res.text().catch(() => "No error body")
+      console.error(`Failed to fetch videos: ${res.status} ${res.statusText} - ${errorText}`)
+      return []
     }
 
-    const { data }: { data: ApiVideo[] } = await res.json()
+    const response = await res.json()
+    const data = response.data
 
     if (!Array.isArray(data)) {
       console.error("API did not return an array of videos")
@@ -100,10 +107,11 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
   }
 }
 
-export default async function SoftStoryPage({ params }: { params: { slug: string } }) {
+export default async function SoftStoryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const domainName = await getDomainName('subdomain');
   const getFullDomainName = await getDomainName('full');
-  const videos = await getVideos(params.slug, domainName);
+  const videos = await getVideos(slug, domainName);
 
   if (!videos.length) {
     return (
@@ -119,7 +127,7 @@ export default async function SoftStoryPage({ params }: { params: { slug: string
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900">
-      <VideoFeed videos={videos} initialSlug={params.slug} domainName={domainName} />
+      <VideoFeed videos={videos} initialSlug={slug} domainName={domainName} />
     </main>
   )
 }
