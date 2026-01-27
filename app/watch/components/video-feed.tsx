@@ -31,9 +31,12 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
     return 0
   })
 
-  const loadMoreVideos = useCallback(async () => {
-    if (isLoadingMore || !hasMoreStories) return
+  const isLoadingRef = useRef(false)
 
+  const loadMoreVideos = useCallback(async () => {
+    if (isLoadingRef.current || !hasMoreStories) return
+
+    isLoadingRef.current = true
     setIsLoadingMore(true)
 
     try {
@@ -48,7 +51,8 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
       })
 
       if (!res.ok) {
-        throw new Error(`Failed to fetch more videos: ${res.statusText}`)
+        const errorText = await res.text().catch(() => "")
+        throw new Error(`Failed to fetch more videos: ${res.status} ${res.statusText} ${errorText}`)
       }
 
       const response = await res.json()
@@ -58,19 +62,28 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
         setHasMoreStories(false)
         setShowEndMessage(true)
       } else if (Array.isArray(data) && data.length > 0) {
-        const newVideos: Video[] = data.map((apiVideo: ApiVideo) => ({
-          id: apiVideo.slug,
-          title: apiVideo.story_title,
-          description: apiVideo.story_description,
-          slug: apiVideo.slug,
-          src: apiVideo.generated_story_url,
-          reporterName: apiVideo.reporter_name,
-          channelName: apiVideo.channel_name,
-          domain: domainName,
-        }))
+        // Filter out any videos that are already in the list to prevent duplicates
+        const existingSlugs = new Set(videos.map(v => v.slug))
+        const newVideos: Video[] = data
+          .filter((apiVideo: ApiVideo) => !existingSlugs.has(apiVideo.slug))
+          .map((apiVideo: ApiVideo) => ({
+            id: apiVideo.slug,
+            title: apiVideo.story_title,
+            description: apiVideo.story_description,
+            slug: apiVideo.slug,
+            src: apiVideo.generated_story_url,
+            reporterName: apiVideo.reporter_name,
+            channelName: apiVideo.channel_name,
+            domain: domainName,
+          }))
 
-        setVideos((prev) => [...prev, ...newVideos])
-        setCurrentPage((prev) => prev + 1)
+        if (newVideos.length === 0) {
+          setHasMoreStories(false)
+          setShowEndMessage(true)
+        } else {
+          setVideos((prev) => [...prev, ...newVideos])
+          setCurrentPage((prev) => prev + 1)
+        }
       } else {
         setHasMoreStories(false)
         setShowEndMessage(true)
@@ -80,9 +93,10 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
       setHasMoreStories(false)
       setShowEndMessage(true)
     } finally {
+      isLoadingRef.current = false
       setIsLoadingMore(false)
     }
-  }, [currentPage, domainName, isLoadingMore, hasMoreStories])
+  }, [currentPage, domainName, hasMoreStories, videos])
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
@@ -129,7 +143,7 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
               window.history.replaceState(null, "", `${basePath}/watch/${video.slug}`)
             }
 
-            if (index >= videos.length - 2 && hasMoreStories && !isLoadingMore) {
+            if (index >= videos.length - 2 && hasMoreStories && !isLoadingRef.current) {
               loadMoreVideos()
             }
           }
@@ -147,7 +161,7 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
     return () => {
       videoElements.forEach((el) => observer.unobserve(el))
     }
-  }, [pathname, videos, hasMoreStories, isLoadingMore, loadMoreVideos])
+  }, [pathname, videos, hasMoreStories, loadMoreVideos])
 
   useEffect(() => {
     const initialIndex = (() => {
