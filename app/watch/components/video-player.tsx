@@ -113,7 +113,7 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
       <button
         onClick={handleClose}
         className="absolute top-3 left-4 border rounded-3xl flex items-center gap-1 text-slate-200 group ml-auto hover:bg-slate-700 border-slate-200"
-        style={{zIndex: '9999'}}
+        style={{ zIndex: '9999' }}
         aria-label="Back"
       >
         <div className="py-1 px-2.5 rounded-full  transition-colors flex gap-1 items-center">
@@ -122,7 +122,15 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
         </div>
       </button>
       <DoubleTap onDoubleTap={togglePlayPause}>
-        <video ref={videoRef} src={video.src} className="w-full h-full object-contain" loop playsInline muted={isMuted} />
+        <video
+          ref={videoRef}
+          src={video.src}
+          className="w-full h-full object-contain"
+          loop
+          playsInline
+          muted={isMuted}
+          preload="metadata"
+        />
       </DoubleTap>
 
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
