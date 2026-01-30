@@ -4,42 +4,6 @@ import { headers } from "next/headers"
 import { VideoFeed } from "../components/video-feed"
 import type { ApiVideo, Video } from "../types"
 
-// This function fetches all videos to tell Next.js which pages to pre-build.
-// It sends a POST request without a specific slug to get all items.
-export async function generateStaticParams() {
-  try {
-    const formData = new FormData()
-    formData.append("page_no", "0")
-    formData.append("domain_name", "test")
-    formData.append("slug", "")
-
-    const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
-      method: "POST",
-      body: formData,
-    })
-
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => "No error body")
-      console.error(`Failed to fetch slugs: ${res.status} ${res.statusText} - ${errorText}`)
-      return []
-    }
-
-    const response = await res.json()
-    const data = response.data
-
-    if (!Array.isArray(data)) {
-      console.error("API did not return an array for generateStaticParams")
-      return []
-    }
-
-    return data.map((video) => ({
-      slug: video.slug,
-    }))
-  } catch (error) {
-    console.error("Failed to generate static params:", error)
-    return []
-  }
-}
 
 async function getDomainName(mode: "subdomain" | "full" = "subdomain"): Promise<string> {
   const headersList = await headers()
