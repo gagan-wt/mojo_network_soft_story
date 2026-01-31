@@ -32,6 +32,7 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
   })
 
   const isLoadingRef = useRef(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   const loadMoreVideos = useCallback(async () => {
     if (isLoadingRef.current || !hasMoreStories) return
@@ -40,63 +41,105 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
     setIsLoadingMore(true)
 
     try {
+      const nextPage = currentPage + 1
       const formData = new FormData()
-      formData.append("page_no", (currentPage + 1).toString())
+      formData.append("page_no", nextPage.toString())
       formData.append("domain_name", domainName)
-      formData.append("slug", "") // blank slug for pagination
+      formData.append("slug", "")
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/softStoryWatch`, {
         method: "POST",
         body: formData,
       })
 
-      if (!res.ok) {
-        const errorText = await res.text().catch(() => "")
-        throw new Error(`Failed to fetch more videos: ${res.status} ${res.statusText} ${errorText}`)
-      }
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
 
       const response = await res.json()
-      const { status, message, data } = response
+      const { status, data } = response
 
-      if (status === 200 && Array.isArray(data) && data.length === 0) {
-        setHasMoreStories(false)
-        setShowEndMessage(true)
-      } else if (Array.isArray(data) && data.length > 0) {
-        // Filter out any videos that are already in the list to prevent duplicates
-        const existingSlugs = new Set(videos.map(v => v.slug))
-        const newVideos: Video[] = data
-          .filter((apiVideo: ApiVideo) => !existingSlugs.has(apiVideo.slug))
-          .map((apiVideo: ApiVideo) => ({
-            id: apiVideo.slug,
-            title: apiVideo.story_title,
-            description: apiVideo.story_description,
-            slug: apiVideo.slug,
-            src: apiVideo.generated_story_url,
-            reporterName: apiVideo.reporter_name,
-            channelName: apiVideo.channel_name,
-            domain: domainName,
-          }))
-
-        if (newVideos.length === 0) {
+      if (status === 200 && Array.isArray(data)) {
+        if (data.length === 0) {
           setHasMoreStories(false)
           setShowEndMessage(true)
         } else {
-          setVideos((prev) => [...prev, ...newVideos])
-          setCurrentPage((prev) => prev + 1)
+          setVideos((prev) => {
+            const existingSlugs = new Set(prev.map(v => v.slug))
+            const newVideos: Video[] = data
+              .filter((apiVideo: ApiVideo) => !existingSlugs.has(apiVideo.slug))
+              .map((apiVideo: ApiVideo) => ({
+                id: apiVideo.slug,
+                title: apiVideo.story_title,
+                description: apiVideo.story_description,
+                slug: apiVideo.slug,
+                src: apiVideo.generated_story_url,
+                reporterName: apiVideo.reporter_name,
+                channelName: apiVideo.channel_name,
+                domain: domainName,
+              }))
+
+            if (newVideos.length === 0) {
+              setHasMoreStories(false)
+              return prev
+            }
+            return [...prev, ...newVideos]
+          })
+          setCurrentPage(nextPage)
         }
-      } else {
-        setHasMoreStories(false)
-        setShowEndMessage(true)
       }
     } catch (error) {
       console.error("Failed to load more videos:", error)
-      setHasMoreStories(false)
-      setShowEndMessage(true)
     } finally {
       isLoadingRef.current = false
       setIsLoadingMore(false)
     }
-  }, [currentPage, domainName, hasMoreStories, videos])
+  }, [currentPage, domainName, hasMoreStories])
+
+  // Effect for setting active index based on scroll
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number.parseInt(entry.target.getAttribute("data-index") || "0", 10)
+            setActiveIndex(index)
+
+            const video = videos[index]
+            if (video && pathname !== `/watch/${video.slug}`) {
+              const basePath = window.location.pathname.split("/watch")[0]
+              window.history.replaceState(null, "", `${basePath}/watch/${video.slug}`)
+            }
+          }
+        })
+      },
+      { root: container, threshold: 0.5 }
+    )
+
+    const videoElements = container.querySelectorAll(".video-container")
+    videoElements.forEach((el) => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [videos, pathname])
+
+  // Effect for infinite scroll (sentinel)
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasMoreStories) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingRef.current) {
+          loadMoreVideos()
+        }
+      },
+      { root: containerRef.current, threshold: 0.1, rootMargin: "200px" }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMoreStories, loadMoreVideos])
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
@@ -112,7 +155,6 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
     const isOnLastStory = activeIndex === videos.length - 1
 
     if (!isOnLastStory) {
-      // User left the last story, reset the flag and hide message
       if (messageShownForCurrentVisit) {
         setMessageShownForCurrentVisit(false)
       }
@@ -120,48 +162,10 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
         setShowEndMessage(false)
       }
     } else if (isOnLastStory && !hasMoreStories && !messageShownForCurrentVisit && !isLoadingMore) {
-      // User is on last story, no more stories available, and we haven't shown the message yet
       setShowEndMessage(true)
       setMessageShownForCurrentVisit(true)
     }
   }, [activeIndex, videos.length, hasMoreStories, messageShownForCurrentVisit, isLoadingMore, showEndMessage])
-
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = Number.parseInt(entry.target.getAttribute("data-index") || "0", 10)
-            setActiveIndex(index)
-            const video = videos[index]
-            console.log("Pathname:", pathname, "Video slug:", video?.slug)
-            if (video && pathname !== `/watch/${video.slug}`) {
-              const basePath = window.location.pathname.split("/watch")[0]
-              window.history.replaceState(null, "", `${basePath}/watch/${video.slug}`)
-            }
-
-            if (index >= videos.length - 2 && hasMoreStories && !isLoadingRef.current) {
-              loadMoreVideos()
-            }
-          }
-        })
-      },
-      {
-        root: container,
-        threshold: 0.5,
-      },
-    )
-
-    const videoElements = container.querySelectorAll(".video-container")
-    videoElements.forEach((el) => observer.observe(el))
-
-    return () => {
-      videoElements.forEach((el) => observer.unobserve(el))
-    }
-  }, [pathname, videos, hasMoreStories, loadMoreVideos])
 
   useEffect(() => {
     const initialIndex = (() => {
@@ -212,6 +216,11 @@ export function VideoFeed({ videos: initialVideos, initialSlug, domainName }: Vi
           </div>
         </div>
       ))}
+      {hasMoreStories && (
+        <div ref={sentinelRef} className="h-20 w-full flex items-center justify-center">
+          {isLoadingMore && <Loader2 className="w-6 h-6 animate-spin text-white/50" />}
+        </div>
+      )}
     </div>
   )
 }

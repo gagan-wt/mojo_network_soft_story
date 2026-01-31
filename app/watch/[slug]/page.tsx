@@ -36,10 +36,15 @@ async function getVideos(slug: string, domainName: string): Promise<Video[]> {
     formData.append("domain_name", domainName)
     formData.append("slug", slug)
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     const res = await fetch(`${process.env.API_URL}/softStoryWatch`, {
       method: "POST",
       body: formData,
+      signal: controller.signal,
     })
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "No error body")
