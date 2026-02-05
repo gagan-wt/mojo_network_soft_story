@@ -12,8 +12,12 @@ async function getDomainName(mode: "subdomain" | "full" = "subdomain"): Promise<
   const IS_LOCAL = host.startsWith("localhost") || host.startsWith("127.0.0.1")
   const SAAS_MAIN_DOMAIN = "mojonetwork.in"
 
-  if (IS_LOCAL) {
-    return mode === "full" ? host : "test"
+    const IS_IP =
+    /^(\d{1,3}\.){3}\d{1,3}$/.test(host) || // IPv4
+    /^\[?[a-fA-F0-9:]+\]?$/.test(host)
+
+  if (IS_LOCAL || IS_IP) {
+    return mode === "full" ? host : "pannanews.com"
   }
 
   if (mode === "full") {
