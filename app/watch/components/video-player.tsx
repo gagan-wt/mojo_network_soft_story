@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { Play, Loader2, ArrowLeft } from "lucide-react"
+import { Play, Loader2, Heart, ArrowBigDown, SkipBack, StepBack, Cross, X, ArrowLeft } from "lucide-react"
 import { DoubleTap } from "./double-tap"
 import { TimelineBar } from "./timeline-bar"
 import { ControlPanel } from "./control-panel"
@@ -15,7 +15,6 @@ interface VideoPlayerProps {
 export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const wasPlayingRef = useRef(false)
-  const timeUpdateThrottleRef = useRef<number>(0)
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
@@ -24,22 +23,16 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
   const [duration, setDuration] = useState(0)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
 
-  // Cleanup video when inactive to free memory
   useEffect(() => {
-    const videoElement = videoRef.current
-    if (!videoElement) return
-
     if (isActive) {
-      videoElement.play().catch(() => setIsPlaying(false))
+      videoRef.current?.play().catch(() => setIsPlaying(false))
     } else {
-      videoElement.pause()
-      videoElement.currentTime = 0
-      // Remove video source to free memory when not active
-      videoElement.removeAttribute('src')
-      videoElement.load()
-      setIsLoading(true)
-      setIsDescriptionExpanded(false)
-      setProgress(0)
+      videoRef.current?.pause()
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0
+        setIsLoading(true)
+        setIsDescriptionExpanded(false)
+      }
     }
   }, [isActive])
 
@@ -47,19 +40,11 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
     const videoElement = videoRef.current
     if (!videoElement) return
 
-    // Throttled time update to reduce state updates (improves performance)
-    const handleTimeUpdate = () => {
-      const now = Date.now()
-      if (now - timeUpdateThrottleRef.current > 100) { // Update max 10 times per second
-        timeUpdateThrottleRef.current = now
-        if (videoElement.duration > 0) {
-          setProgress(videoElement.currentTime / videoElement.duration)
-        }
-      }
-    }
-
     const handlePlay = () => setIsPlaying(true)
     const handlePause = () => setIsPlaying(false)
+    const handleTimeUpdate = () => {
+      if (videoElement.duration > 0) setProgress(videoElement.currentTime / videoElement.duration)
+    }
     const handleLoadedMetadata = () => setDuration(videoElement.duration)
     const handleWaiting = () => setIsLoading(true)
     const handleCanPlayThrough = () => setIsLoading(false)
@@ -117,33 +102,29 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
       videoRef.current.play()
     }
   }, [])
+  const handleClose = () => {
+    window.location.href = window.location.origin;
+  }
 
-  const handleClose = useCallback(() => {
-    window.location.href = window.location.origin
-  }, [])
-
-  const toggleDescription = useCallback(() => {
-    setIsDescriptionExpanded(prev => !prev)
-  }, [])
+  const toggleDescription = () => setIsDescriptionExpanded(!isDescriptionExpanded)
 
   return (
     <div className="relative w-full h-full bg-black">
       <button
         onClick={handleClose}
         className="absolute top-3 left-4 border rounded-3xl flex items-center gap-1 text-slate-200 group ml-auto hover:bg-slate-700 border-slate-200"
-        style={{ zIndex: 9999 }}
+        style={{ zIndex: '9999' }}
         aria-label="Back"
       >
-        <div className="py-1 px-2.5 rounded-full transition-colors flex gap-1 items-center">
+        <div className="py-1 px-2.5 rounded-full  transition-colors flex gap-1 items-center">
           <ArrowLeft size={16} className="icon-shadow" />
           <span className="text-[11px] font-semibold text-shadow">Back</span>
         </div>
       </button>
-
       <DoubleTap onDoubleTap={togglePlayPause}>
         <video
           ref={videoRef}
-          src={isActive ? video.src : undefined}
+          src={video.src}
           className="w-full h-full object-contain"
           loop
           playsInline
@@ -152,19 +133,18 @@ export function VideoPlayer({ video, isActive }: VideoPlayerProps) {
         />
       </DoubleTap>
 
-      {(isLoading || !isPlaying) && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {isLoading ? (
-            <div className="bg-black/50 p-4 rounded-full">
-              <Loader2 className="w-10 h-10 text-white animate-spin" />
-            </div>
-          ) : (
-            <div className="bg-black/50 p-6 rounded-full">
-              <Play className="w-12 h-12 text-white" fill="white" />
-            </div>
-          )}
-        </div>
-      )}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {isLoading && (
+          <div className="bg-black/50 p-4 rounded-full">
+            <Loader2 className="w-10 h-10 text-white animate-spin" />
+          </div>
+        )}
+        {!isPlaying && !isLoading && (
+          <div className="bg-black/50 p-6 rounded-full">
+            <Play className="w-12 h-12 text-white" fill="white" />
+          </div>
+        )}
+      </div>
 
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/70 to-transparent" />
